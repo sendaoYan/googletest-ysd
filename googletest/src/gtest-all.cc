@@ -35,6 +35,22 @@
 
 // This line ensures that gtest.h can be compiled on its own, even
 // when it's fused.
+// Suppress the deprecated-declarations warning that Clang emits when
+// std::stable_sort internally uses std::get_temporary_buffer (deprecated in
+// C++17).  The [[deprecated]] attribute lives in <bits/stl_tempbuf.h>, which
+// is first parsed when <memory> is included via gtest.h.  We pre-include that
+// specific header with the warning suppressed so that only declarations in
+// this one header are affected—other deprecated declarations in <memory> are
+// still diagnosed normally.  This works around Clang bug
+// https://github.com/llvm/llvm-project/issues/76515 where #pragma diagnostic
+// suppression at the call site does not propagate through template
+// instantiation for [[deprecated]] attributes.
+#if defined(__clang__) && __has_include(<bits/stl_tempbuf.h>)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#include <bits/stl_tempbuf.h>
+#pragma clang diagnostic pop
+#endif
 #include "gtest/gtest.h"
 
 // The following lines pull in the real gtest *.cc files.
